@@ -1,3 +1,6 @@
 PyPDF2
 pdfplumber
 python-docx
+fastapi
+uvicorn[standard]
+python-multipart

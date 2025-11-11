@@ -4,10 +4,11 @@ import type { User } from '../App';
 
 interface UploadPageProps {
   onUpload: (file: File) => void;
+  onParse: () => void;
   user: User | null;
 }
 
-const UploadPage: React.FC<UploadPageProps> = ({ onUpload, user }) => {
+const UploadPage: React.FC<UploadPageProps> = ({ onUpload, onParse, user }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -67,15 +68,12 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUpload, user }) => {
     setError('');
   };
 
-  const processUpload = () => {
+  const handleParse = () => {
     if (!uploadedFile) return;
     
     setUploading(true);
-    // Simulate upload processing
-    setTimeout(() => {
-      setUploading(false);
-      onUpload(uploadedFile);
-    }, 2000);
+    onUpload(uploadedFile); // First, notify App about the file
+    onParse(); // Then, trigger parsing
   };
 
   return (
@@ -172,7 +170,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUpload, user }) => {
               </div>
 
               <button
-                onClick={processUpload}
+                onClick={handleParse}
                 disabled={uploading}
                 className="mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-8 py-3 rounded-lg font-medium hover:from-cyan-600 hover:to-teal-600 transition-all duration-200 disabled:opacity-50"
               >

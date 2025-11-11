@@ -2,24 +2,80 @@ import re
 import json
 import os
 import sys
+import fitz
 from readers.pdf_reader import read_pdf
 from readers.docx_reader import read_docx
 
+# --- New Helper Functions for Advanced PDF Parsing ---
+
+def get_dominant_font_info(metadata):
+    """Finds the most common font size and name for body text."""
+    if not metadata:
+        return 10, "default"
+    
+    sizes = [span['size'] for span in metadata if span['text'].strip()]
+    fonts = [span['font'] for span in metadata if span['text'].strip()]
+    
+    dominant_size = max(set(sizes), key=sizes.count) if sizes else 10
+    dominant_font = max(set(fonts), key=fonts.count) if fonts else "default"
+    
+    return dominant_size, dominant_font
+
+def is_header(span, body_size):
+    """Determines if a text span is likely a section header."""
+    text = span['text'].strip()
+    if not text:
+        return False
+
+    # Rule 1: Larger than body text or bold
+    is_formatted = span['size'] > (body_size + 1) or "bold" in span['font'].lower()
+    
+    # Rule 2: Short, and likely a keyword or all caps
+    is_header_like_content = (
+        len(text.split()) < 5 or
+        text.isupper()
+    )
+    
+    return is_formatted and is_header_like_content
+
 def read_resume(file_path):
-    """Reads the content of a resume file."""
+    """
+    Reads resume content. For PDFs, it returns rich metadata.
+    For other types, it returns plain text.
+    """
     try:
         if file_path.endswith('.pdf'):
-            return read_pdf(file_path)
+            doc = fitz.open(file_path)
+            metadata = []
+            raw_text = ""
+            for page_num, page in enumerate(doc):
+                raw_text += page.get_text() + "\n"
+                page_data = page.get_text("dict")
+                for block in page_data.get("blocks", []):
+                    if block['type'] == 0:  # Text block
+                        for line in block.get("lines", []):
+                            for span in line.get("spans", []):
+                                metadata.append({
+                                    "text": span["text"],
+                                    "size": span["size"],
+                                    "font": span["font"],
+                                    "bbox": span["bbox"],
+                                    "page": page_num
+                                })
+            doc.close()
+            return {"raw_text": raw_text, "metadata": metadata}
+        
         elif file_path.endswith('.docx'):
-            return read_docx(file_path)
+            text = read_docx(file_path)
+            return {"raw_text": text, "metadata": None}
+        
         else:
             with open(file_path, 'r', encoding='utf-8') as file:
-                return file.read()
-    except FileNotFoundError:
-        print(f"Error: The file '{file_path}' was not found.")
-        return None
+                text = file.read()
+                return {"raw_text": text, "metadata": None}
+
     except Exception as e:
-        print(f"An error occurred while reading the file: {e}")
+        print(f"An error occurred while reading the file '{file_path}': {e}")
         return None
 
 def parse_personal_info(text):
@@ -39,7 +95,7 @@ def parse_personal_info(text):
     
     return info
 
-def parse_sections(text):
+def parse_sections(text, metadata=None):
     """
     Parse resume sections. Lines that contain any keyword (substring match)
     and look like a header (short, all-caps, ends with colon, or starts with the keyword)
@@ -59,69 +115,96 @@ def parse_sections(text):
         (['publications'], 'Publications'),
     ]
 
-    lines = text.splitlines()
-    current = None
-    buffer = []
+     # --- Advanced PDF Parsing using Metadata ---
+    if metadata:
+        body_size, _ = get_dominant_font_info(metadata)
+        
+        # Find all headers and their original index
+        headers = []
+        for i, span in enumerate(metadata):
+            span_text_lower = span['text'].strip().lower()
+            if not span_text_lower:
+                continue
+            
+            for keywords, canonical in groups:
+                if any(kw in span_text_lower for kw in keywords) and is_header(span, body_size):
+                    headers.append({
+                        "canonical": canonical,
+                        "bbox": span['bbox'],
+                        "page": span['page'],
+                        "index": i
+                    })
+                    break # Move to next span once a header is found
+        
+        # Sort headers by page and vertical position
+        headers.sort(key=lambda h: (h['page'], h['bbox'][1]))
+        
+        sections = {}
+        for i, header in enumerate(headers):
+            start_index = header['index'] + 1
+            end_index = len(metadata)
+            
+            # Find the end of the section (start of the next header)
+            if i + 1 < len(headers):
+                end_index = headers[i+1]['index']
+            
+            # Collect all text spans within this section
+            content_spans = metadata[start_index:end_index]
+            section_text = ' '.join(span['text'] for span in content_spans).strip()
+            
+            # Merge content if section already exists
+            canonical_name = header['canonical']
+            if canonical_name in sections:
+                sections[canonical_name] += "\n" + section_text
+            else:
+                sections[canonical_name] = section_text
+        
+        return sections
 
-    def save_current():
-        nonlocal sections, current, buffer
-        if not current:
-            return
-        content = '\n'.join(buffer).strip()
-        if not content:
-            buffer = []
-            return
-        if current in sections and sections[current]:
-            sections[current] = sections[current].rstrip() + '\n' + content
-        else:
-            sections[current] = content
+    # --- Fallback to Text-Based Parsing ---
+    else:
+        sections = {}
+        lines = text.splitlines()
+        current = None
         buffer = []
 
-    for line in lines:
-        cleaned = line.rstrip()
-        if not cleaned.strip():
-            # blank line — treat as separator but still keep buffering under current
-            if current:
-                buffer.append('')
-            continue
+        def save_current():
+            nonlocal sections, current, buffer
+            if not current: return
+            content = '\n'.join(buffer).strip()
+            if not content:
+                buffer = []
+                return
+            if current in sections and sections[current]:
+                sections[current] = sections[current].rstrip() + '\n' + content
+            else:
+                sections[current] = content
+            buffer = []
 
-        lw = cleaned.lower()
-        matched_title = None
+        for line in lines:
+            cleaned = line.strip()
+            if not cleaned:
+                if current: buffer.append('')
+                continue
 
-        # look for any keyword match and header-like shape
-        for kws, canon in groups:
-            for kw in kws:
-                if kw in lw:
+            lw = cleaned.lower()
+            matched_title = None
+            for kws, canon in groups:
+                if any(kw in lw for kw in kws):
                     words = cleaned.split()
-                    looks_like_header = (
-                        len(words) <= 10 or           # short line
-                        cleaned.isupper() or         # ALL CAPS
-                        cleaned.strip().endswith(':') or
-                        lw.startswith(kw)            # starts with the keyword
-                    )
-                    if looks_like_header:
+                    if len(words) <= 5 or cleaned.isupper() or cleaned.endswith(':'):
                         matched_title = canon
                         break
+            
             if matched_title:
-                break
-
-        if matched_title:
-            # save previous section and start (or continue) the canonical section
-            save_current()
-            current = matched_title
-            # start with header line removed (so header itself is not repeated in content)
-            # if header line contains extra text after the keyword (e.g., "Education & Training"),
-            # keep the remainder as a small intro line
-            remainder = re.sub(r'(?i).*?\b(' + '|'.join(re.escape(k) for group in groups for k in group[0]) + r')\b[:\s\-]*', '', cleaned, count=1).strip()
-            if remainder:
-                buffer = [remainder]
-            else:
+                save_current()
+                current = matched_title
                 buffer = []
-        elif current:
-            buffer.append(cleaned)
+            elif current:
+                buffer.append(cleaned)
 
-    save_current()
-    return sections
+        save_current()
+        return sections
 
 def save_to_file(data, output_filename):
     """Saves the extracted data to a JSON file."""
@@ -133,9 +216,8 @@ def save_to_file(data, output_filename):
         print(f"An error occurred while saving the file: {e}")
 
 def main():
-    # Usage: python data_parse.py <input_file> [output_json]
     if len(sys.argv) < 2:
-        print("Usage: python data_parse.py <resume.(txt|docx|pdf)> [output.json]")
+        print("Usage: python data_parse.py <resume_file> [output.json]")
         sys.exit(1)
 
     in_path = sys.argv[1]
@@ -143,18 +225,15 @@ def main():
         print(f"Error: '{in_path}' not found.")
         sys.exit(1)
 
-    # derive output path if not provided
-    out_path = sys.argv[2] if len(sys.argv) >= 3 else (
-        os.path.splitext(in_path)[0] + "_parsed.json"
-    )
+    out_path = sys.argv[2] if len(sys.argv) >= 3 else (os.path.splitext(in_path)[0] + "_parsed.json")
 
-    text = read_resume(in_path)
-    if not text:
-        print("Error: no text extracted (empty).")
+    resume_data = read_resume(in_path)
+    if not resume_data or not resume_data['raw_text']:
+        print("Error: no text extracted from the resume.")
         sys.exit(1)
 
-    personal_info = parse_personal_info(text)
-    sections = parse_sections(text)
+    personal_info = parse_personal_info(resume_data['raw_text'])
+    sections = parse_sections(resume_data['raw_text'], resume_data.get('metadata'))
 
     data = {"personal_info": personal_info, "sections": sections}
     save_to_file(data, out_path)

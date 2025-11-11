@@ -92,10 +92,11 @@ function App() {
 
   const handleUpload = (file: File) => {
     setUploadedFile(file);
-    // Simulate parsing delay
-    setTimeout(() => {
-      setCurrentPage('parsed');
-    }, 1500);
+  };
+
+  const handleParse = () => {
+    // This will now trigger the navigation to the parsed page
+    setCurrentPage('parsed');
   };
 
   const handleSave = async (data: ParsedResumeData) => {
@@ -137,7 +138,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-teal-100">
       {currentPage === 'login' && <LoginPage onLogin={handleLogin} />}
-      {currentPage === 'upload' && <UploadPage onUpload={handleUpload} user={user} />}
+      {currentPage === 'upload' && <UploadPage onUpload={handleUpload} onParse={handleParse} user={user} />}
       {currentPage === 'parsed' && (
         <ParsedInfoPage 
           uploadedFile={uploadedFile}

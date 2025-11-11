@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, ArrowLeft, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { mockParseResume } from '../utils/resumeParser';
+// import { mockParseResume } from '../utils/resumeParser';
+import { parseResume } from '../utils/resumeParser';
 import type { ParsedResumeData } from '../App';
 
 interface ParsedInfoPageProps {
@@ -23,14 +24,71 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
     skills: true
   });
 
+  // Preview state
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [docxHtml, setDocxHtml] = useState<string | null>(null);
+
+  // Call backend to parse
   useEffect(() => {
-    if (uploadedFile) {
-      // Simulate parsing delay
-      setTimeout(() => {
-        const mockData = mockParseResume(uploadedFile);
-        setParsedData(mockData);
-        setLoading(false);
-      }, 2000);
+    let mounted = true;
+    setLoading(true);
+
+    if (!uploadedFile) {
+      setParsedData(null);
+      setLoading(false);
+      return;
+    }
+
+    (async () => {
+      try {
+        const data = await parseResume(uploadedFile);
+        if (mounted) setParsedData(data);
+      } catch (e) {
+        console.error('Failed to parse resume', e);
+        if (mounted) setParsedData(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, [uploadedFile]);
+
+  // Build preview for PDF / image / DOCX
+  useEffect(() => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setDocxHtml(null);
+    if (!uploadedFile) return;
+
+    const name = uploadedFile.name.toLowerCase();
+    const type = uploadedFile.type;
+
+    const isPdf = type === 'application/pdf' || name.endsWith('.pdf');
+    const isImage = type.startsWith('image/');
+    const isDocx =
+      name.endsWith('.docx') ||
+      type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+    if (isPdf || isImage) {
+      const url = URL.createObjectURL(uploadedFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+
+    if (isDocx) {
+      (async () => {
+        try {
+          const buf = await uploadedFile.arrayBuffer();
+          const mammoth: any = await import('mammoth');
+          const result = await mammoth.convertToHtml({ arrayBuffer: buf });
+          setDocxHtml(result.value);
+        } catch (e) {
+          console.warn('DOCX preview failed', e);
+        }
+      })();
     }
   }, [uploadedFile]);
 
@@ -200,17 +258,53 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
       {/* Main Content */}
       <div className="max-w-6xl mx-auto p-4">
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* PDF Preview */}
+          {/* Resume Preview */}
           <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Resume Preview</h2>
-            <div className="bg-gray-100 rounded-lg p-8 text-center">
-              <div className="w-16 h-16 bg-gray-300 rounded-lg mx-auto mb-4"></div>
-              <p className="text-gray-600">
-                PDF preview would appear here
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                {uploadedFile?.name}
-              </p>
+            <div className="bg-gray-100 rounded-lg p-2 text-center">
+              {(() => {
+                const name = uploadedFile?.name?.toLowerCase() || '';
+                const type = uploadedFile?.type || '';
+                const isPdf = type === 'application/pdf' || name.endsWith('.pdf');
+                const isImage = type.startsWith('image/');
+                const isDocx =
+                  name.endsWith('.docx') ||
+                  type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+                if (isPdf && previewUrl) {
+                  return (
+                    <iframe
+                      src={previewUrl}
+                      className="w-full h-[600px] bg-white rounded-lg"
+                      title="PDF Preview"
+                    />
+                  );
+                }
+                if (isImage && previewUrl) {
+                  return (
+                    <img
+                      src={previewUrl}
+                      alt="Uploaded"
+                      className="max-h-[600px] mx-auto rounded-lg"
+                    />
+                  );
+                }
+                if (isDocx && docxHtml) {
+                  return (
+                    <div
+                      className="text-left bg-white rounded-lg p-6 max-h-[600px] overflow-auto prose prose-sm"
+                      dangerouslySetInnerHTML={{ __html: docxHtml }}
+                    />
+                  );
+                }
+                return (
+                  <div className="p-8">
+                    <div className="w-16 h-16 bg-gray-300 rounded-lg mx-auto mb-4"></div>
+                    <p className="text-gray-600">Preview not available for this file type</p>
+                    <p className="text-sm text-gray-500 mt-2">{uploadedFile?.name}</p>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -532,7 +626,7 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
                     <button
                       onClick={() => {
                         const input = document.querySelector('input[placeholder="Add a skill..."]') as HTMLInputElement;
-                        if (input.value.trim()) {
+                        if (input && input.value.trim()) {
                           addSkill(input.value);
                           input.value = '';
                         }
