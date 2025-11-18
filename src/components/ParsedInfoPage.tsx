@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Save, ArrowLeft, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { mockParseResume } from '../utils/resumeParser';
+import {
+  Save,
+  ArrowLeft,
+  Plus,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  FileText
+} from 'lucide-react';
+import { parseResumeFile } from '../utils/resumeParser';
 import type { ParsedResumeData } from '../App';
+import BrandHeader from './layout/BrandHeader';
+import AppFooter from './layout/AppFooter';
 
 interface ParsedInfoPageProps {
   uploadedFile: File | null;
@@ -9,11 +20,7 @@ interface ParsedInfoPageProps {
   onBack: () => void;
 }
 
-const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({ 
-  uploadedFile, 
-  onSave, 
-  onBack 
-}) => {
+const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({ uploadedFile, onSave, onBack }) => {
   const [parsedData, setParsedData] = useState<ParsedResumeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState({
@@ -22,20 +29,43 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
     education: true,
     skills: true
   });
+  const [skillInput, setSkillInput] = useState('');
 
   useEffect(() => {
-    if (uploadedFile) {
-      // Simulate parsing delay
-      setTimeout(() => {
-        const mockData = mockParseResume(uploadedFile);
-        setParsedData(mockData);
-        setLoading(false);
-      }, 2000);
+    if (!uploadedFile) {
+      return;
     }
+
+    let isMounted = true;
+
+    const parseFile = async () => {
+      setLoading(true);
+      try {
+        const parsed = await parseResumeFile(uploadedFile);
+        if (isMounted) {
+          setParsedData(parsed);
+        }
+      } catch (error) {
+        console.error('Resume parsing failed:', error);
+        if (isMounted) {
+          setParsedData(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    parseFile();
+
+    return () => {
+      isMounted = false;
+    };
   }, [uploadedFile]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section]
     }));
@@ -60,7 +90,7 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
       role: '',
       startDate: '',
       endDate: '',
-      highlights: []
+      highlights: [] as string[]
     };
     setParsedData({
       ...parsedData,
@@ -72,7 +102,7 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
     if (!parsedData) return;
     setParsedData({
       ...parsedData,
-      experience: parsedData.experience.map(exp =>
+      experience: parsedData.experience.map((exp) =>
         exp.id === id ? { ...exp, [field]: value } : exp
       )
     });
@@ -82,7 +112,7 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
     if (!parsedData) return;
     setParsedData({
       ...parsedData,
-      experience: parsedData.experience.filter(exp => exp.id !== id)
+      experience: parsedData.experience.filter((exp) => exp.id !== id)
     });
   };
 
@@ -105,7 +135,7 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
     if (!parsedData) return;
     setParsedData({
       ...parsedData,
-      education: parsedData.education.map(edu =>
+      education: parsedData.education.map((edu) =>
         edu.id === id ? { ...edu, [field]: value } : edu
       )
     });
@@ -115,7 +145,7 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
     if (!parsedData) return;
     setParsedData({
       ...parsedData,
-      education: parsedData.education.filter(edu => edu.id !== id)
+      education: parsedData.education.filter((edu) => edu.id !== id)
     });
   };
 
@@ -141,153 +171,181 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
     }
   };
 
+  const handleAddSkillFromInput = () => {
+    if (!skillInput.trim()) return;
+    addSkill(skillInput);
+    setSkillInput('');
+  };
+
+  const headerAction = (
+    <div className="flex items-center gap-3">
+      <button
+        onClick={onBack}
+        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-cyan-300 hover:text-slate-900"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to upload
+      </button>
+      <button
+        onClick={handleSave}
+        disabled={loading || !parsedData}
+        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <Save className="h-4 w-4" />
+        Save profile
+      </button>
+    </div>
+  );
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Parsing your resume...</h2>
-          <p className="text-gray-600">This may take a few moments</p>
+      <div className="flex min-h-screen flex-col bg-gradient-to-br from-[#F4FBFF] via-white to-[#E9F5FF]">
+        <BrandHeader subdued action={headerAction} />
+        <div className="flex flex-1 items-center justify-center px-4 py-16">
+          <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-10 text-center shadow-lg shadow-cyan-500/10">
+            <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent" />
+            <h2 className="text-xl font-semibold text-slate-900">Parsing your resume...</h2>
+            <p className="mt-2 text-sm text-slate-500">We are preparing your Follio content blueprint.</p>
+          </div>
         </div>
+        <AppFooter />
       </div>
     );
   }
 
   if (!parsedData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to parse resume</h2>
-          <p className="text-gray-600 mb-4">Please try uploading a different file</p>
-          <button onClick={onBack} className="text-cyan-600 hover:text-cyan-700">
-            Go back
-          </button>
+      <div className="flex min-h-screen flex-col bg-gradient-to-br from-[#F4FBFF] via-white to-[#E9F5FF]">
+        <BrandHeader subdued action={headerAction} />
+        <div className="flex flex-1 items-center justify-center px-4 py-16">
+          <div className="max-w-md rounded-3xl border border-slate-200/70 bg-white/80 p-10 text-center shadow-lg shadow-cyan-500/10">
+            <h2 className="text-2xl font-semibold text-slate-900">We could not parse that file</h2>
+            <p className="mt-3 text-sm text-slate-600">Please verify the format and try uploading again.</p>
+            <button
+              onClick={onBack}
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:-translate-y-0.5 hover:shadow-xl"
+            >
+              Try another file
+            </button>
+          </div>
         </div>
+        <AppFooter />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              Back
-            </button>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Review & Edit</h1>
-              <p className="text-sm text-gray-600">
-                {uploadedFile?.name}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleSave}
-            className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-6 py-2 rounded-lg font-medium hover:from-cyan-600 hover:to-teal-600 transition-all duration-200"
-          >
-            <Save className="w-5 h-5" />
-            Save Profile
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* PDF Preview */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Resume Preview</h2>
-            <div className="bg-gray-100 rounded-lg p-8 text-center">
-              <div className="w-16 h-16 bg-gray-300 rounded-lg mx-auto mb-4"></div>
-              <p className="text-gray-600">
-                PDF preview would appear here
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                {uploadedFile?.name}
-              </p>
-            </div>
-          </div>
-
-          {/* Parsed Data Form */}
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-[#F4FBFF] via-white to-[#E9F5FF] text-slate-900">
+      <BrandHeader subdued action={headerAction} />
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-16">
+        <section className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="space-y-6">
-            {/* Profile Section */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-8 shadow-sm backdrop-blur">
+              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/70 bg-cyan-50/70 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-cyan-700">
+                <Sparkles className="h-3.5 w-3.5" />
+                Step 2 of 3 · Review & edit
+              </span>
+              <h1 className="mt-4 text-2xl font-semibold text-slate-900">Craft your narrative</h1>
+              <p className="mt-2 text-sm text-slate-600">
+                Fine-tune the copy pulled from your resume so your final Follio mirrors the voice, achievements, and details you want clients to see.
+              </p>
+              <div className="mt-6 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100/80 text-cyan-600">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{uploadedFile?.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {uploadedFile ? `${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB` : 'Upload a resume to continue'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleSave}
+                    className="hidden items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-cyan-700 transition hover:bg-cyan-100 lg:inline-flex"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    Save progress
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-8 shadow-sm backdrop-blur">
+              <h2 className="text-lg font-semibold text-slate-900">Resume preview</h2>
+              <p className="mt-2 text-sm text-slate-600">A live preview of your uploaded resume will appear here.</p>
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/80 p-10 text-center">
+                <div className="mx-auto mb-4 h-20 w-16 rounded-lg bg-slate-200" />
+                <p className="text-sm text-slate-500">Preview not available in this demo environment.</p>
+                <p className="mt-2 text-xs text-slate-400">{uploadedFile?.name}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-slate-200/80 bg-white/80 shadow-sm backdrop-blur">
               <button
                 onClick={() => toggleSection('profile')}
-                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                className="flex w-full items-center justify-between rounded-3xl p-6 text-left transition hover:bg-slate-50/80"
               >
-                <h2 className="text-lg font-semibold text-gray-900">Profile Information</h2>
+                <h2 className="text-lg font-semibold text-slate-900">Profile information</h2>
                 {expandedSections.profile ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                  <ChevronUp className="h-5 w-5 text-slate-400" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                  <ChevronDown className="h-5 w-5 text-slate-400" />
                 )}
               </button>
-              
+
               {expandedSections.profile && (
-                <div className="p-6 pt-0 space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-4 px-6 pb-6">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Full Name
-                      </label>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Full name</label>
                       <input
                         type="text"
                         value={parsedData.profile.name}
                         onChange={(e) => updateProfile('name', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-100"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Location
-                      </label>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Location</label>
                       <input
                         type="text"
                         value={parsedData.profile.location}
                         onChange={(e) => updateProfile('location', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-100"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Professional Headline
-                    </label>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Professional headline</label>
                     <input
                       type="text"
                       value={parsedData.profile.headline}
                       onChange={(e) => updateProfile('headline', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-100"
                     />
                   </div>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email
-                      </label>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Email</label>
                       <input
                         type="email"
                         value={parsedData.profile.email}
                         onChange={(e) => updateProfile('email', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-100"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phone
-                      </label>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Phone</label>
                       <input
                         type="tel"
                         value={parsedData.profile.phone}
                         onChange={(e) => updateProfile('phone', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-100"
                       />
                     </div>
                   </div>
@@ -295,260 +353,226 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({
               )}
             </div>
 
-            {/* Experience Section */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <div className="rounded-3xl border border-slate-200/80 bg-white/80 shadow-sm backdrop-blur">
               <button
                 onClick={() => toggleSection('experience')}
-                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                className="flex w-full items-center justify-between rounded-3xl p-6 text-left transition hover:bg-slate-50/80"
               >
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Work Experience ({parsedData.experience.length})
-                </h2>
+                <h2 className="text-lg font-semibold text-slate-900">Work experience ({parsedData.experience.length})</h2>
                 {expandedSections.experience ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                  <ChevronUp className="h-5 w-5 text-slate-400" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                  <ChevronDown className="h-5 w-5 text-slate-400" />
                 )}
               </button>
-              
+
               {expandedSections.experience && (
-                <div className="p-6 pt-0">
-                  <div className="space-y-6">
-                    {parsedData.experience.map((exp, index) => (
-                      <div key={exp.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-medium text-gray-900">
-                            Experience #{index + 1}
-                          </h3>
-                          <button
-                            onClick={() => removeExperience(exp.id)}
-                            className="text-red-500 hover:text-red-700 p-1"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                <div className="space-y-5 px-6 pb-6">
+                  {parsedData.experience.map((exp, index) => (
+                    <div key={exp.id} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                      <div className="mb-4 flex items-center justify-between">
+                        <h3 className="text-sm flex items-center gap-2 font-semibold uppercase tracking-wide text-cyan-700">
+                          Experience #{index + 1}
+                        </h3>
+                        <button
+                          onClick={() => removeExperience(exp.id)}
+                          className="rounded-full p-1 text-red-500 transition hover:bg-red-100/60"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Company</label>
+                          <input
+                            type="text"
+                            value={exp.company}
+                            onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                          />
                         </div>
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Company
-                            </label>
-                            <input
-                              type="text"
-                              value={exp.company}
-                              onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Role
-                            </label>
-                            <input
-                              type="text"
-                              value={exp.role}
-                              onChange={(e) => updateExperience(exp.id, 'role', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Start Date
-                            </label>
-                            <input
-                              type="date"
-                              value={exp.startDate}
-                              onChange={(e) => updateExperience(exp.id, 'startDate', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              End Date
-                            </label>
-                            <input
-                              type="date"
-                              value={exp.endDate}
-                              onChange={(e) => updateExperience(exp.id, 'endDate', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                            />
-                          </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Role</label>
+                          <input
+                            type="text"
+                            value={exp.role}
+                            onChange={(e) => updateExperience(exp.id, 'role', e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Start date</label>
+                          <input
+                            type="date"
+                            value={exp.startDate}
+                            onChange={(e) => updateExperience(exp.id, 'startDate', e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">End date</label>
+                          <input
+                            type="date"
+                            value={exp.endDate}
+                            onChange={(e) => updateExperience(exp.id, 'endDate', e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                   <button
                     onClick={addExperience}
-                    className="mt-4 flex items-center gap-2 text-cyan-600 hover:text-cyan-700 font-medium"
+                    className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100"
                   >
-                    <Plus className="w-4 h-4" />
-                    Add Experience
+                    <Plus className="h-4 w-4" />
+                    Add experience
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Education Section */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <div className="rounded-3xl border border-slate-200/80 bg-white/80 shadow-sm backdrop-blur">
               <button
                 onClick={() => toggleSection('education')}
-                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                className="flex w-full items-center justify-between rounded-3xl p-6 text-left transition hover:bg-slate-50/80"
               >
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Education ({parsedData.education.length})
-                </h2>
+                <h2 className="text-lg font-semibold text-slate-900">Education ({parsedData.education.length})</h2>
                 {expandedSections.education ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                  <ChevronUp className="h-5 w-5 text-slate-400" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                  <ChevronDown className="h-5 w-5 text-slate-400" />
                 )}
               </button>
-              
+
               {expandedSections.education && (
-                <div className="p-6 pt-0">
-                  <div className="space-y-6">
-                    {parsedData.education.map((edu, index) => (
-                      <div key={edu.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-medium text-gray-900">
-                            Education #{index + 1}
-                          </h3>
-                          <button
-                            onClick={() => removeEducation(edu.id)}
-                            className="text-red-500 hover:text-red-700 p-1"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                <div className="space-y-5 px-6 pb-6">
+                  {parsedData.education.map((edu, index) => (
+                    <div key={edu.id} className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
+                      <div className="mb-4 flex items-center justify-between">
+                        <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Education #{index + 1}</h3>
+                        <button
+                          onClick={() => removeEducation(edu.id)}
+                          className="rounded-full p-1 text-red-500 transition hover:bg-red-100/60"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">School</label>
+                          <input
+                            type="text"
+                            value={edu.school}
+                            onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                          />
                         </div>
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              School
-                            </label>
-                            <input
-                              type="text"
-                              value={edu.school}
-                              onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Degree
-                            </label>
-                            <input
-                              type="text"
-                              value={edu.degree}
-                              onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Start Date
-                            </label>
-                            <input
-                              type="date"
-                              value={edu.startDate}
-                              onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              End Date
-                            </label>
-                            <input
-                              type="date"
-                              value={edu.endDate}
-                              onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                            />
-                          </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Degree</label>
+                          <input
+                            type="text"
+                            value={edu.degree}
+                            onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Start date</label>
+                          <input
+                            type="date"
+                            value={edu.startDate}
+                            onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">End date</label>
+                          <input
+                            type="date"
+                            value={edu.endDate}
+                            onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                   <button
                     onClick={addEducation}
-                    className="mt-4 flex items-center gap-2 text-cyan-600 hover:text-cyan-700 font-medium"
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
                   >
-                    <Plus className="w-4 h-4" />
-                    Add Education
+                    <Plus className="h-4 w-4" />
+                    Add education
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Skills Section */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <div className="rounded-3xl border border-slate-200/80 bg-white/80 shadow-sm backdrop-blur">
               <button
                 onClick={() => toggleSection('skills')}
-                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                className="flex w-full items-center justify-between rounded-3xl p-6 text-left transition hover:bg-slate-50/80"
               >
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Skills ({parsedData.skills.length})
-                </h2>
+                <h2 className="text-lg font-semibold text-slate-900">Skills ({parsedData.skills.length})</h2>
                 {expandedSections.skills ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                  <ChevronUp className="h-5 w-5 text-slate-400" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                  <ChevronDown className="h-5 w-5 text-slate-400" />
                 )}
               </button>
-              
+
               {expandedSections.skills && (
-                <div className="p-6 pt-0">
-                  <div className="flex flex-wrap gap-2 mb-4">
+                <div className="space-y-4 px-6 pb-6">
+                  <div className="flex flex-wrap gap-2">
                     {parsedData.skills.map((skill, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center gap-1 bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm"
+                        className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/80 px-4 py-1.5 text-sm font-medium text-indigo-700"
                       >
                         {skill}
                         <button
                           onClick={() => removeSkill(index)}
-                          className="hover:bg-cyan-200 rounded-full p-0.5"
+                          className="rounded-full p-0.5 transition hover:bg-indigo-100"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="h-3 w-3" />
                         </button>
                       </span>
                     ))}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-3 sm:flex-row">
                     <input
                       type="text"
                       placeholder="Add a skill..."
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      onKeyPress={(e) => {
+                      value={skillInput}
+                      onChange={(e) => setSkillInput(e.target.value)}
+                      onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          addSkill((e.target as HTMLInputElement).value);
-                          (e.target as HTMLInputElement).value = '';
+                          e.preventDefault();
+                          handleAddSkillFromInput();
                         }
                       }}
+                      className="flex-1 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
                     />
                     <button
-                      onClick={() => {
-                        const input = document.querySelector('input[placeholder="Add a skill..."]') as HTMLInputElement;
-                        if (input.value.trim()) {
-                          addSkill(input.value);
-                          input.value = '';
-                        }
-                      }}
-                      className="flex items-center gap-1 bg-cyan-100 text-cyan-700 px-3 py-2 rounded-lg hover:bg-cyan-200 transition-colors"
+                      onClick={handleAddSkillFromInput}
+                      className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
                     >
-                      <Plus className="w-4 h-4" />
-                      Add
+                      <Plus className="h-4 w-4" />
+                      Add skill
                     </button>
                   </div>
                 </div>
               )}
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
+      <AppFooter />
     </div>
   );
 };

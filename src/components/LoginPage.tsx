@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import type { User } from '../App';
 import { supabase, isSupabaseConfigured } from '../utils/supabaseClient';
+import BrandHeader from './layout/BrandHeader';
+import AppFooter from './layout/AppFooter';
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
@@ -91,25 +93,19 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const headerAction = (
+    <button
+      onClick={scrollToAuth}
+      className="hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-cyan-300 hover:text-slate-900"
+    >
+      Access your account
+      <ArrowRight className="h-4 w-4" />
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-[#F5F9FF] text-slate-900">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-white font-semibold">
-              F
-            </div>
-            <span className="text-2xl font-semibold tracking-tight">Follio</span>
-          </div>
-          <button
-            onClick={scrollToAuth}
-            className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            Access your account
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-[#F5FBFF] via-white to-[#ECF8FF] text-slate-900">
+      <BrandHeader subdued action={headerAction} />
 
       <main className="max-w-6xl mx-auto px-4">
         <section className="py-16 md:py-24 text-center">
@@ -304,16 +300,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-slate-500 sm:flex-row">
-          <div>© {new Date().getFullYear()} Follio. All rights reserved.</div>
-          <div className="flex items-center gap-6">
-            <button className="hover:text-slate-900">Terms</button>
-            <button className="hover:text-slate-900">Privacy</button>
-            <button className="hover:text-slate-900">Support</button>
-          </div>
-        </div>
-      </footer>
+      <AppFooter />
     </div>
   );
 };

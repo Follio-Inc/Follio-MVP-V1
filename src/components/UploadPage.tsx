@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Upload, FileText, X, CheckCircle } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle, Sparkles, ShieldCheck } from 'lucide-react';
 import type { User } from '../App';
+import BrandHeader from './layout/BrandHeader';
+import AppFooter from './layout/AppFooter';
 
 interface UploadPageProps {
-  onUpload: (file: File) => void;
+  onUpload: (file: File) => Promise<void> | void;
   user: User | null;
 }
 
@@ -67,70 +69,118 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUpload, user }) => {
     setError('');
   };
 
-  const processUpload = () => {
+  const processUpload = async () => {
     if (!uploadedFile) return;
-    
+
     setUploading(true);
-    // Simulate upload processing
-    setTimeout(() => {
+    try {
+      await onUpload(uploadedFile);
+    } finally {
       setUploading(false);
-      onUpload(uploadedFile);
-    }, 2000);
+    }
   };
 
-  return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8 pt-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Upload Your Resume
-          </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Upload your resume and let Follio extract and organize your professional information automatically.
-            We support PDF and DOCX formats.
-          </p>
-          {user && (
-            <p className="text-sm text-cyan-600 mt-2">
-              Welcome, {user.name || user.email}
-            </p>
-          )}
-        </div>
+  const headerAction = user ? (
+    <div className="hidden sm:flex items-center gap-3 rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm text-slate-600 shadow-sm">
+      Signed in as
+      <span className="font-semibold text-slate-900">{user.name || user.email}</span>
+    </div>
+  ) : null;
 
-        {/* Upload Area */}
-        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-          {!uploadedFile ? (
-            <div
-              className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
-                dragActive
-                  ? 'border-cyan-400 bg-cyan-50'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <div className="flex flex-col items-center gap-4">
-                <div className={`p-4 rounded-full ${
-                  dragActive ? 'bg-cyan-100' : 'bg-gray-100'
-                }`}>
-                  <Upload className={`w-8 h-8 ${
-                    dragActive ? 'text-cyan-600' : 'text-gray-400'
-                  }`} />
+  return (
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-[#F4FBFF] via-white to-[#E9F5FF] text-slate-900">
+      <BrandHeader subdued action={headerAction} />
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-4 py-16">
+        <section className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+          <div className="space-y-6">
+            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-cyan-50/60 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-cyan-700">
+              Step 1 of 3 · Upload
+            </span>
+            <div className="space-y-4">
+              <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-900 md:text-4xl">
+                Upload your resume to craft your Follio presence
+              </h1>
+              <p className="max-w-xl text-lg text-slate-600">
+                Drop in your latest resume and we will translate it into a polished, on-brand digital portfolio. Keep your story consistent across every touchpoint.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-5 shadow-sm backdrop-blur">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-cyan-100/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+                  <Upload className="h-3.5 w-3.5" />
+                  Smart import
                 </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Drag and drop your resume here
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    or click to browse files
-                  </p>
-                  
-                  <label className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-6 py-3 rounded-lg font-medium hover:from-cyan-600 hover:to-teal-600 transition-all duration-200 cursor-pointer">
-                    <Upload className="w-5 h-5" />
-                    Choose File
+                <p className="text-sm text-slate-600">
+                  Upload PDF or DOCX files and let our parser structure your experience, education, and highlights instantly.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-5 shadow-sm backdrop-blur">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-100/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Guided polish
+                </div>
+                <p className="text-sm text-slate-600">
+                  Use the next steps to fine-tune messaging, imagery, and calls to action that match your brand voice.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-5 shadow-sm backdrop-blur">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-100/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  Secure storage
+                </div>
+                <p className="text-sm text-slate-600">
+                  Your documents are encrypted at rest with Supabase so your credentials and achievements stay protected.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-5 shadow-sm backdrop-blur">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-teal-100/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-700">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Ready to publish
+                </div>
+                <p className="text-sm text-slate-600">
+                  In just a few clicks, publish a responsive Follio that is easy to share with clients, recruiters, and teams.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-8 shadow-xl shadow-cyan-500/10 backdrop-blur">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900">Upload resume</h2>
+                <p className="text-sm text-slate-500">PDF or DOCX · up to 10MB</p>
+              </div>
+              <div className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+                Auto-parse enabled
+              </div>
+            </div>
+            {!uploadedFile ? (
+              <div
+                className={`rounded-2xl border-2 border-dashed p-10 text-center transition-all duration-200 ${
+                  dragActive
+                    ? 'border-cyan-400 bg-cyan-50/70'
+                    : 'border-slate-200/80 hover:border-cyan-200'
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div
+                    className={`rounded-full p-4 ${
+                      dragActive ? 'bg-cyan-100/80 text-cyan-600' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    <Upload className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Drag and drop your resume</h3>
+                    <p className="mt-2 text-sm text-slate-500">or click below to choose a file from your device</p>
+                  </div>
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:-translate-y-0.5 hover:shadow-xl">
+                    <Upload className="h-4 w-4" />
+                    Choose file
                     <input
                       type="file"
                       className="hidden"
@@ -138,99 +188,90 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUpload, user }) => {
                       onChange={handleFileInput}
                     />
                   </label>
-                </div>
-
-                <div className="text-sm text-gray-500">
-                  Supported formats: PDF, DOCX (max 10MB)
+                  <p className="text-xs text-slate-400">Supported formats: PDF, DOCX (max 10MB)</p>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="inline-flex items-center gap-3 bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-                <div className="text-left">
-                  <div className="font-medium text-green-900">File uploaded successfully</div>
-                  <div className="text-sm text-green-700">{uploadedFile.name}</div>
+            ) : (
+              <div className="space-y-6 text-center">
+                <div className="inline-flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-left shadow-sm">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-700">File uploaded successfully</p>
+                    <p className="text-xs text-emerald-600">{uploadedFile.name}</p>
+                  </div>
+                  <button
+                    onClick={removeFile}
+                    className="ml-2 rounded-full p-1 transition hover:bg-emerald-100"
+                  >
+                    <X className="h-4 w-4 text-emerald-600" />
+                  </button>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+                  <FileText className="h-4 w-4" />
+                  <span>{uploadedFile.name}</span>
+                  <span>({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
                 </div>
                 <button
-                  onClick={removeFile}
-                  className="ml-4 p-1 hover:bg-green-100 rounded-full transition-colors"
+                  onClick={processUpload}
+                  disabled={uploading}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <X className="w-5 h-5 text-green-600" />
+                  {uploading ? (
+                    <>
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="h-4 w-4" />
+                      Parse resume
+                    </>
+                  )}
                 </button>
               </div>
+            )}
 
-              <div className="flex items-center justify-center gap-4">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <FileText className="w-5 h-5" />
-                  <span>{uploadedFile.name}</span>
-                  <span className="text-sm">
-                    ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                </div>
+            {error && (
+              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-600">
+                {error}
               </div>
-
-              <button
-                onClick={processUpload}
-                disabled={uploading}
-                className="mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-8 py-3 rounded-lg font-medium hover:from-cyan-600 hover:to-teal-600 transition-all duration-200 disabled:opacity-50"
-              >
-                {uploading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-5 h-5" />
-                    Parse Resume
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
-              {error}
-            </div>
-          )}
-        </div>
-
-        {/* Features Preview */}
-        <div className="mt-12 grid md:grid-cols-3 gap-6">
-          <div className="text-center p-6">
-            <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <Upload className="w-6 h-6 text-cyan-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Smart Parsing</h3>
-            <p className="text-gray-600 text-sm">
-              Advanced AI extracts your experience, education, and skills automatically
-            </p>
+            )}
           </div>
-          
-          <div className="text-center p-6">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+        </section>
+
+        <section className="rounded-3xl border border-slate-200/70 bg-white/80 p-10 shadow-sm backdrop-blur">
+          <div className="grid gap-8 md:grid-cols-3">
+            <div className="space-y-3 text-center md:text-left">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-cyan-50 text-cyan-600 md:mx-0">
+                <Upload className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900">Smart parsing</h3>
+              <p className="text-sm text-slate-600">
+                Advanced AI extracts your experience, education, and signature skills automatically so you can focus on storytelling.
+              </p>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Easy Editing</h3>
-            <p className="text-gray-600 text-sm">
-              Review and edit extracted information with our intuitive interface
-            </p>
-          </div>
-          
-          <div className="text-center p-6">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-6 h-6 text-purple-600" />
+            <div className="space-y-3 text-center md:text-left">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 md:mx-0">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900">Effortless editing</h3>
+              <p className="text-sm text-slate-600">
+                Review every section with inline controls that match our polished design system—no clunky forms or modals.
+              </p>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Portfolio Ready</h3>
-            <p className="text-gray-600 text-sm">
-              Transform your resume into a beautiful, professional portfolio
-            </p>
+            <div className="space-y-3 text-center md:text-left">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 md:mx-0">
+                <FileText className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900">Portfolio ready</h3>
+              <p className="text-sm text-slate-600">
+                Instantly transform your documents into a shareable Follio site with responsive layouts and branded theming.
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
+      <AppFooter />
     </div>
   );
 };

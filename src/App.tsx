@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import LoginPage from './components/LoginPage';
 import UploadPage from './components/UploadPage';
 import ParsedInfoPage from './components/ParsedInfoPage';
@@ -56,6 +57,55 @@ function App() {
 
     let isMounted = true;
 
+    const mapSupabaseUserToAppUser = (supabaseUser: SupabaseUser): User => ({
+      id: supabaseUser.id,
+      email: supabaseUser.email ?? '',
+      name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || ''
+    });
+
+    const fetchResumeData = async (supabaseUser: SupabaseUser): Promise<ParsedResumeData | null> => {
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .select('resume_data')
+        .eq('id', supabaseUser.id)
+        .single();
+
+      if (profileError) {
+        if (profileError.code === 'PGRST116') {
+          return null;
+        }
+
+        throw profileError;
+      }
+
+      return (data?.resume_data as ParsedResumeData | null) ?? null;
+    };
+
+    const populateSessionState = async (session: Session) => {
+      const supabaseUser = session.user;
+      const appUser = mapSupabaseUserToAppUser(supabaseUser);
+
+      if (!isMounted) {
+        return;
+      }
+
+      setUser(appUser);
+
+      const resumeData = await fetchResumeData(supabaseUser);
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (resumeData) {
+        setParsedData(resumeData);
+        setCurrentPage('dashboard');
+      } else {
+        setParsedData(null);
+        setCurrentPage('upload');
+      }
+    };
+
     const bootstrapSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -66,28 +116,7 @@ function App() {
         if (!isMounted) return;
 
         if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            name: session.user.user_metadata?.name || session.user.email?.split('@')[0]
-          });
-
-          const { data, error: profileError } = await supabase
-            .from('profiles')
-            .select('resume_data')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError && profileError.code !== 'PGRST116') {
-            throw profileError;
-          }
-
-          if (data?.resume_data) {
-            setParsedData(data.resume_data);
-            setCurrentPage('dashboard');
-          } else {
-            setCurrentPage('upload');
-          }
+          await populateSessionState(session);
         }
       } catch (error) {
         console.error('Auth check error:', error);
@@ -101,20 +130,40 @@ function App() {
       }
     };
 
-    const { data: authSubscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authSubscription } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
 
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0]
-        });
-        setCurrentPage('upload');
-      } else {
+      if (event === 'SIGNED_OUT' || !session?.user) {
         setUser(null);
         setParsedData(null);
         setCurrentPage('login');
+        return;
+      }
+
+      const appUser = mapSupabaseUserToAppUser(session.user);
+      setUser(appUser);
+
+      if (event === 'SIGNED_IN') {
+        try {
+          const resumeData = await fetchResumeData(session.user);
+
+          if (!isMounted) {
+            return;
+          }
+
+          if (resumeData) {
+            setParsedData(resumeData);
+            setCurrentPage('dashboard');
+          } else {
+            setParsedData(null);
+            setCurrentPage('upload');
+          }
+        } catch (profileError) {
+          console.error('Profile fetch error:', profileError);
+          if (isMounted) {
+            setConfigError('We could not reach Supabase. Please verify your Supabase configuration.');
+          }
+        }
       }
     });
 
@@ -133,10 +182,8 @@ function App() {
 
   const handleUpload = (file: File) => {
     setUploadedFile(file);
-    // Simulate parsing delay
-    setTimeout(() => {
-      setCurrentPage('parsed');
-    }, 1500);
+    setParsedData(null);
+    setCurrentPage('parsed');
   };
 
   const handleSave = async (data: ParsedResumeData) => {
@@ -189,11 +236,12 @@ function App() {
 
   if (configError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-cyan-50 to-teal-100 p-6 text-center">
-        <div className="max-w-xl bg-white shadow-lg rounded-2xl p-8 border border-red-100">
-          <h1 className="text-2xl font-semibold text-red-600 mb-4">Configuration required</h1>
-          <p className="text-gray-700 mb-6">{configError}</p>
-          <p className="text-sm text-gray-500">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#F4FBFF] via-white to-[#E9F5FF] p-6 text-center">
+        <div className="max-w-xl rounded-3xl border border-red-200/60 bg-white/90 p-10 shadow-xl shadow-red-200/30 backdrop-blur">
+          <h1 className="text-2xl font-semibold text-red-600">Configuration required</h1>
+          <p className="mt-4 text-sm text-slate-600">{configError}</p>
+          <p className="mt-6 text-xs uppercase tracking-[0.25em] text-slate-400">Deploy guidance</p>
+          <p className="mt-2 text-sm text-slate-500">
             Update the deployment environment with your Supabase credentials and redeploy to restore full functionality.
           </p>
         </div>
@@ -203,14 +251,14 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-teal-100">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#F4FBFF] via-white to-[#E9F5FF]">
         <LoadingSpinner size="large" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-teal-100">
+    <div className="min-h-screen bg-gradient-to-br from-[#F4FBFF] via-white to-[#E9F5FF]">
       {currentPage === 'login' && (
         <LoginPage
           onLogin={handleLogin}
