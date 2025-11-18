@@ -1,8 +1,8 @@
-import { supabase } from '../App';
 import React from 'react';
 import { User, MapPin, Mail, Phone, Building, GraduationCap, Code, LogOut, CreditCard as Edit } from 'lucide-react';
 import type { User as UserType, ParsedResumeData } from '../App';
 import follioIcon from '../assets/follio-icon.svg';
+import { supabase, isSupabaseConfigured } from '../utils/supabaseClient';
 
 interface DashboardProps {
   user: UserType | null;
@@ -16,8 +16,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout }) => 
 
   React.useEffect(() => {
     const fetchProfileData = async () => {
-      if (!user || parsedData) return;
-      
+      if (!user || parsedData || !supabase || !isSupabaseConfigured) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const { data } = await supabase.from('profiles')
           .select('resume_data')
@@ -85,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout }) => 
                 <Edit className="w-4 h-4" />
                 Edit Profile
               </button>
-              <button 
+              <button
                 onClick={onLogout}
                 className="flex items-center gap-2 text-red-600 hover:text-red-700 px-4 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
               >
@@ -242,7 +245,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout }) => 
             🚀 What's Next?
           </h3>
           <p className="text-gray-700 mb-4">
-            Your profile is ready! Here are some suggested next steps to make the most of Folio:
+            Your profile is ready! Here are some suggested next steps to make the most of Follio:
           </p>
           <div className="space-y-2 text-sm text-gray-600">
             <div className="flex items-center gap-2">

@@ -87,7 +87,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUpload, user }) => {
             Upload Your Resume
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Upload your resume and let Folio extract and organize your professional information automatically.
+            Upload your resume and let Follio extract and organize your professional information automatically.
             We support PDF and DOCX formats.
           </p>
           {user && (
