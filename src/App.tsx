@@ -283,36 +283,37 @@ function App() {
     );
   }
 
-  <div className="min-h-screen bg-secondary text-primary font-sans selection:bg-accent/30">
-    {currentPage === 'login' && (
-      <LoginPage
-        onLogin={handleLogin}
-      />
-    )}
-    {currentPage === 'home' && (
-      <HomePage
-        onUpload={handleUpload}
-        user={user}
-        onLoginClick={() => setCurrentPage('login')}
-      />
-    )}
-    {currentPage === 'parsed' && (
-      <ParsedInfoPage
-        uploadedFile={uploadedFile}
-        initialData={parsedData}
-        onSave={handleSave}
-        onBack={() => setCurrentPage('home')}
-      />
-    )}
-    {currentPage === 'dashboard' && (
-      <Dashboard
-        user={user}
-        parsedData={parsedData}
-        onLogout={handleLogout}
-      />
-    )}
-    <Toaster />
-  </div>
+  return (
+    <div className="min-h-screen bg-secondary text-primary font-sans selection:bg-accent/30">
+      {currentPage === 'login' && (
+        <LoginPage
+          onLogin={handleLogin}
+        />
+      )}
+      {currentPage === 'home' && (
+        <HomePage
+          onUpload={handleUpload}
+          user={user}
+          onLoginClick={() => setCurrentPage('login')}
+        />
+      )}
+      {currentPage === 'parsed' && (
+        <ParsedInfoPage
+          uploadedFile={uploadedFile}
+          initialData={parsedData}
+          onSave={handleSave}
+          onBack={() => setCurrentPage('home')}
+        />
+      )}
+      {currentPage === 'dashboard' && (
+        <Dashboard
+          user={user}
+          parsedData={parsedData}
+          onLogout={handleLogout}
+        />
+      )}
+      <Toaster />
+    </div>
   );
 }
 
