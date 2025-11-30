@@ -235,7 +235,7 @@ const HomePage: React.FC<HomePageProps> = ({ onUpload, user, onLoginClick }) => 
                                         </div>
                                         <div>
                                             <p className="font-medium text-primary">File uploaded</p>
-                                            <p className="text-xs text-primary/50">{uploadedFile.name}</p>
+                                            <p className="text-xs text-primary/50">{uploadedFile?.name}</p>
                                         </div>
                                         <button
                                             onClick={removeFile}
