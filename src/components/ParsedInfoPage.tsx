@@ -569,11 +569,11 @@ const ParsedInfoPage: React.FC<ParsedInfoPageProps> = ({ uploadedFile, initialDa
                           handleAddSkillFromInput();
                         }
                       }}
-                      className="flex-1 rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                      className="flex-1 rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
                     />
                     <button
                       onClick={handleAddSkillFromInput}
-                      className="inline-flex items-center gap-2.5 rounded-xl border border-primary/10 bg-white px-6 py-3 text-sm font-medium text-primary transition-all hover:bg-secondary hover:shadow-sm"
+                      className="inline-flex items-center gap-2.5 rounded-full border border-blue-200 bg-blue-50 px-6 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-100 hover:shadow-sm"
                     >
                       <Plus className="h-4 w-4" />
                       Add skill

@@ -156,8 +156,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout }) => 
               <p className="text-xs font-medium uppercase tracking-widest text-primary/50">Snapshot</p>
               <h2 className="mt-3 text-2xl font-serif font-medium tracking-tight text-primary">Follio progress overview</h2>
               <div className="mt-8 grid gap-5 sm:grid-cols-3">
-                <div className="group rounded-3xl border border-cyan-100 bg-cyan-50/50 p-5 text-cyan-700 transition hover:bg-cyan-50">
-                  <div className="text-4xl font-bold tracking-tighter text-cyan-800">{profileData.experience.length}</div>
+                <div className="group rounded-3xl border border-blue-100 bg-blue-50/50 p-5 text-blue-700 transition hover:bg-blue-50">
+                  <div className="text-4xl font-bold tracking-tighter text-blue-800">{profileData.experience.length}</div>
                   <p className="mt-2 text-xs font-bold uppercase tracking-wide opacity-80">Roles captured</p>
                 </div>
                 <div className="group rounded-3xl border border-emerald-100 bg-emerald-50/50 p-5 text-emerald-700 transition hover:bg-emerald-50">
@@ -176,7 +176,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout }) => 
               <p className="mt-3 text-[15px] leading-relaxed text-primary/60">Complete these finishing touches to publish your Follio with confidence.</p>
               <div className="mt-6 space-y-4 text-sm font-medium text-primary/60">
                 <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 transition hover:bg-slate-50">
-                  <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                   Add project imagery and testimonials for visual impact.
                 </div>
                 <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 transition hover:bg-slate-50">
@@ -196,16 +196,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout }) => 
           <div className="rounded-[2.5rem] border border-slate-200/60 bg-white/80 p-10 shadow-xl shadow-cyan-500/5 backdrop-blur-md">
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-bold tracking-tight text-slate-900">Work experience</h3>
-              <span className="rounded-full bg-cyan-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-cyan-700 ring-1 ring-cyan-100">
+              <span className="rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-700 ring-1 ring-blue-100">
                 {profileData.experience.length} roles
               </span>
             </div>
             <div className="mt-8 space-y-6">
               {profileData.experience.map((exp) => (
-                <div key={exp.id} className="group rounded-3xl border border-slate-200/60 bg-slate-50/50 p-6 transition hover:border-cyan-200/60 hover:bg-white hover:shadow-lg hover:shadow-cyan-500/5">
+                <div key={exp.id} className="group rounded-3xl border border-slate-200/60 bg-slate-50/50 p-6 transition hover:border-blue-200/60 hover:bg-white hover:shadow-lg hover:shadow-blue-500/10">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wide text-cyan-600">{exp.company}</p>
+                      <p className="text-xs font-bold uppercase tracking-wide text-blue-600">{exp.company}</p>
                       <h4 className="mt-1 text-lg font-bold text-slate-900">{exp.role}</h4>
                     </div>
                     <p className="text-sm font-medium text-slate-500">
@@ -217,7 +217,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout }) => 
                     <ul className="mt-5 space-y-3 text-[15px] leading-relaxed text-slate-600">
                       {exp.highlights.map((highlight, index) => (
                         <li key={index} className="flex gap-3">
-                          <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-cyan-400" />
+                          <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-400" />
                           {highlight}
                         </li>
                       ))}
@@ -229,7 +229,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout }) => 
           </div>
 
           <div className="space-y-10">
-            <div className="rounded-[2.5rem] border border-slate-200/60 bg-white/80 p-10 shadow-xl shadow-cyan-500/5 backdrop-blur-md">
+            <div className="rounded-[2.5rem] border border-slate-200/60 bg-white/80 p-10 shadow-xl shadow-blue-500/10 backdrop-blur-md">
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-bold tracking-tight text-slate-900">Education</h3>
                 <span className="rounded-full bg-emerald-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100">
@@ -250,7 +250,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout }) => 
               </div>
             </div>
 
-            <div className="rounded-[2.5rem] border border-slate-200/60 bg-white/80 p-10 shadow-xl shadow-cyan-500/5 backdrop-blur-md">
+            <div className="rounded-[2.5rem] border border-slate-200/60 bg-white/80 p-10 shadow-xl shadow-blue-500/10 backdrop-blur-md">
               <h3 className="text-2xl font-bold tracking-tight text-slate-900">Skills & tools</h3>
               <p className="mt-3 text-[15px] leading-relaxed text-slate-600">Key strengths we highlight prominently on your Follio.</p>
               <div className="mt-6 flex flex-wrap gap-3">
