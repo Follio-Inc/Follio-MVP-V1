@@ -29,7 +29,7 @@ export const BrandHeader: React.FC<BrandHeaderProps> = ({ action, subdued = fals
             <p className="text-[15px] font-medium text-slate-600">Portfolio Experience Platform</p>
           </div>
         </div>
-        {action && <div className="flex items-center gap-4 text-sm font-medium text-slate-600">{action}</div>}
+        {action && <div className="flex items-center gap-4 text-sm font-medium text-primary/80">{action}</div>}
       </div>
     </header>
   );
