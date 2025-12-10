@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, X, CheckCircle, Sparkles, Layers, Palette, Globe, UploadCloud, Wand2, ArrowRight } from 'lucide-react';
+import { Upload, X, CheckCircle, Sparkles, Layers, Palette, Globe, UploadCloud, Wand2, ArrowRight, MousePointerClick } from 'lucide-react';
 import type { User } from '../App';
 import BrandHeader from './layout/BrandHeader';
 import AppFooter from './layout/AppFooter';
@@ -144,7 +144,7 @@ const HomePage: React.FC<HomePageProps> = ({ onUpload, onDemoLoad, user, onLogin
                     </div>
 
                     <div className="mt-24 grid gap-8 md:grid-cols-3 animate-slide-up" style={{ animationDelay: '0.6s' }}>
-                        {[{ icon: Layers, title: 'AI-Driven', description: 'Let Follio transform your content into a polished digital portfolio that reflects your brand.' }, { icon: Palette, title: 'Drag-and-Drop', description: 'Choose layouts, tweak sections, and launch faster with intuitive tools.' }, { icon: Globe, title: 'Customization', description: 'Match your colors, fonts, and voice to create a cohesive online presence.' }].map((feature) => (
+                        {[{ icon: Sparkles, title: 'AI-Driven', description: 'Let Follio transform your content into a polished digital portfolio that reflects your brand.' }, { icon: MousePointerClick, title: 'Drag-and-Drop', description: 'Choose layouts, tweak sections, and launch faster with intuitive tools.' }, { icon: Palette, title: 'Customization', description: 'Match your colors, fonts, and voice to create a cohesive online presence.' }].map((feature) => (
                             <div
                                 key={feature.title}
                                 className="group relative overflow-hidden rounded-[2rem] border border-slate-200/60 bg-white/60 p-10 text-left shadow-lg shadow-blue-500/5 backdrop-blur-md transition-all hover:border-blue-200/50 hover:bg-white hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1"
