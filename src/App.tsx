@@ -279,7 +279,7 @@ function App() {
 
   if (configError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-secondary p-6 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-sky-100 p-6 text-center">
         <div className="max-w-xl rounded-3xl border border-red-200/60 bg-white/90 p-10 shadow-xl shadow-red-200/30 backdrop-blur">
           <h1 className="text-2xl font-semibold text-red-600">Configuration required</h1>
           <p className="mt-4 text-sm text-slate-600">{configError}</p>
@@ -294,14 +294,14 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-secondary">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-sky-100">
         <LoadingSpinner size="large" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-secondary text-primary font-sans selection:bg-accent/30">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-100 text-slate-900 font-sans selection:bg-blue-100">
       {currentPage === 'login' && (
         <LoginPage
           onLogin={handleLogin}
