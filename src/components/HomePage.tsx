@@ -232,7 +232,7 @@ const HomePage: React.FC<HomePageProps> = ({ onUpload, onDemoLoad, user, onLogin
                                     <p className="mt-2 text-sm font-medium text-slate-500">or click to browse</p>
                                     <p className="mt-2 text-xs font-medium text-slate-400">PDF, DOCX up to 10MB</p>
 
-                                    <div className="mt-6">
+                                    <div className="mt-6 relative z-10">
                                         <button
                                             type="button"
                                             onClick={(e) => {
