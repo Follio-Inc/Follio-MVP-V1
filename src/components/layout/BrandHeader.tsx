@@ -22,10 +22,9 @@ export const BrandHeader: React.FC<BrandHeaderProps> = ({ action, subdued = fals
         <div className="flex items-center gap-3">
           <img src={logo} alt="Follio" className="h-10 w-auto object-contain" />
         </div>
+        {action && <div className="flex items-center gap-4 text-sm font-medium text-slate-600">{action}</div>}
       </div>
-      {action && <div className="flex items-center gap-4 text-sm font-medium text-slate-600">{action}</div>}
-    </div>
-    </header >
+    </header>
   );
 };
 
