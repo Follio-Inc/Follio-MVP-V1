@@ -107,7 +107,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout, onLog
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 hover:shadow-xl"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 hover:shadow-xl"
             >
               Begin upload
               <ArrowRight className="h-4 w-4" />
@@ -124,7 +124,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout, onLog
       <BrandHeader subdued action={headerAction} />
       <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-24">
         <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[2.5rem] border border-slate-200/60 bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-500 p-12 text-white shadow-2xl shadow-blue-500/30 ring-1 ring-white/20">
+          <div className="rounded-[2.5rem] border border-slate-200/60 bg-gradient-to-br from-blue-600 via-sky-500 to-blue-500 p-12 text-white shadow-2xl shadow-blue-500/30 ring-1 ring-white/20">
             <div className="flex flex-col gap-8 md:flex-row md:items-start">
               <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white/15 text-white shadow-inner shadow-white/10 backdrop-blur-sm">
                 <UserIcon className="h-12 w-12" />
@@ -132,9 +132,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, parsedData, onLogout, onLog
               <div className="space-y-6">
                 <div>
                   <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{profileData.profile.name}</h1>
-                  <p className="mt-3 text-xl font-medium text-cyan-50">{profileData.profile.headline}</p>
+                  <p className="mt-3 text-xl font-medium text-sky-50">{profileData.profile.headline}</p>
                 </div>
-                <div className="grid gap-4 text-sm font-medium text-cyan-50/90 md:grid-cols-2">
+                <div className="grid gap-4 text-sm font-medium text-sky-50/90 md:grid-cols-2">
                   {profileData.profile.location && (
                     <div className="flex items-center gap-2.5">
                       <MapPin className="h-4.5 w-4.5" />
